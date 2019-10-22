@@ -1,0 +1,422 @@
+RED = "RED"
+BLACK = "BLACK"
+count = 0
+
+#Node class with initializing
+class Node(object):
+    def __init__(self, key):
+        self.key = key
+        self.left = None
+        self.right = None
+        self.parent = None
+        self.height = 1
+        self.color = RED
+
+
+class AVL_Tree:
+
+    def __init__(self):
+        self.root = None
+
+    #insert method to inset a node in a avl tree
+    def insert_avl(self, node1):
+        node = Node(node1)
+        if self.root is None:
+            self.root = node
+            node.parent = None
+            return
+        curr = self.root
+        while curr is not None:
+            if node.key < curr.key:
+                if curr.left is None:
+                    curr.left = node
+                    node.parent = curr
+                    curr = None
+                else:
+                    curr = curr.left
+            else:
+                if curr.right is None:
+                    curr.right = node
+                    node.parent = curr
+                    curr = None
+                else:
+                    curr = curr.right
+        node = node.parent
+        while node is not None:
+            self.rebalance_avl(node)
+            node = node.parent
+
+    #method to rebalance avl tree if subtrees differ by more than one they must be rebalanced
+    def rebalance_avl(self, node):
+        self.height_avl(node)
+        if self.get_balance_avl(node) is -2:
+            if self.get_balance_avl(node.right) is 1:
+                self.rotate_right_avl(node.right)
+            return self.rotate_left_avl(node)
+        elif self.get_balance_avl(node) is 2:
+            if self.get_balance_avl(node.left) is -1:
+                self.rotate_left_avl(node.left)
+            return self.rotate_right_avl(node)
+        return node
+
+    #rotate the tree to the right
+    def rotate_right_avl(self, node):
+        left_right_child = node.left.right
+        if node.parent is not None:
+            self.replace_avl(node.parent, node, node.left)
+        else:
+            self.root = node.left
+            self.root.parent = None
+        self.set_avl(node.left, "right", node)
+        self.set_avl(node, "left", left_right_child)
+
+    #rotate the tree to the right
+    def rotate_left_avl(self, node):
+        right_left_child = node.right.left
+        if node.parent is not None:
+            self.replace_avl(node.parent, node, node.right)
+        else:
+            self.root = node.right
+            self.root.parent = None
+        self.set_avl(node.right, "left", node)
+        self.set_avl(node, "right", right_left_child)
+
+
+    def set_avl(self, parent, which_child, child):
+        if which_child is not "left" and which_child is not "right":
+            return False
+        if which_child is "left":
+            parent.left = child
+        else:
+            parent.right = child
+        if child is not None:
+            child.parent = parent
+        self.height_avl(parent)
+        return True
+
+
+    def replace_avl(self, parent, curr_child, new_child):
+        if parent.left is curr_child:
+            return self.set_avl(parent, "left", new_child)
+        elif parent.right is curr_child:
+            return self.set_avl(parent, "right", new_child)
+        return False
+
+    #get the balanced tree
+    def get_balance_avl(self, node):
+        left_height = -1
+        if node.left is not None:
+            left_height = node.left.height
+        right_height = -1
+        if node.right is not None:
+            right_height = node.right.height
+        return left_height - right_height
+
+
+    def height_avl(self, node):
+        left_height = -1
+        if node.left is not None:
+            left_height = node.left.height
+        right_height = -1
+        if node.right is not None:
+            right_height = node.right.height
+        node.height = max(left_height, right_height) + 1
+
+    #search the avl for a specific data in the tree
+    def search_avl(self, data):
+        curr = self.root
+        while curr is not None:
+            if data > curr.key:
+                curr = curr.right
+            elif data < curr.key:
+                curr = curr.left
+            else:
+                return True
+        return False
+
+    def print_avl(self, node):#print avl tree
+        if node is None:#is node is none, return
+            return
+        self.print_avl(node.left)#print left
+        print(node.key)
+        self.print_avl(node.right)#print right
+        return
+
+class RedBlackTree:
+    def __init__(self):
+        self.root = None
+
+    def insert_redblack(self, node1):
+        node = Node(node1)
+        self.bst_insert(node)
+        node.color = RED #insert red node
+        self.tree_balance_redblack(node)
+        return
+
+    def bst_insert(self, node): #binary search tree helper method to insert
+        if self.root is None:
+            self.root = node
+            node.parent = None
+        else:
+            curr = self.root
+            while curr is not None: #while curr is not empty
+                if node.key < curr.key:
+                    if curr.left is None:
+                        curr.left = node
+                        node.parent = curr
+                        curr = None
+                    else:
+                        curr = curr.left
+                else:
+                    if curr.right is None:
+                        curr.right = node
+                        node.parent = curr
+                        curr = None
+                    else:
+                        curr = curr.right
+        return
+
+    def get_grandparent_rb(self, node): #method to get the grandparent node in a redblack tree
+        if node.parent is None:
+            return None
+        return node.parent.parent
+
+    def get_uncle_redblack(self, node): #method to get the uncle node
+        grandparent = None
+        if node.parent is not None:
+            grandparent = node.parent.parent
+        if grandparent is None:
+            return None
+        if grandparent.left is node.parent:
+            return grandparent.right
+        else:
+            return grandparent.left
+
+    #method to balance redblack tree so it won't be more than one node difference in height
+    def tree_balance_redblack(self, node):
+        if node.parent is None:
+            node.color = BLACK
+            return
+        if node.parent.color == BLACK:
+            return
+        parent = node.parent
+        grandparent = self.get_grandparent_rb(node)
+        uncle = self.get_uncle_redblack(node)
+        if uncle is not None and uncle.color == RED: #if the uncle is red
+            parent.color = uncle.color = BLACK
+            grandparent.color = RED
+            self.tree_balance_redblack(grandparent)
+            return
+        if node == parent.right and parent == grandparent.left:
+            self.rotate_left_redblack(parent)
+            node = parent
+            parent = node.parent
+        elif node == parent.left and parent == grandparent.right:
+            self.rotate_right_redblack(parent)
+            node = parent
+            parent = node.parent
+        parent.color = BLACK
+        grandparent.color = RED
+        if node == parent.left:
+            self.rotate_right_redblack(grandparent)
+        else:
+            self.rotate_left_redblack(grandparent)
+
+    def rotate_left_redblack(self, node):
+        right_left_child = node.right.left #rotate left
+        if node.parent is not None:
+            self.replace_redblack(node.parent, node, node.right)
+        else:
+            self.root = node.right
+            self.root.parent = None
+        self.set_redblack(node.right, "left", node)
+        self.set_redblack(node, "right", right_left_child)
+
+    def rotate_right_redblack(self, node): #rotate right
+        left_right_child = node.left.right
+        if node.parent is not None:
+            self.replace_redblack(node.parent, node, node.left)
+        else:
+            self.root = node.left
+            self.root.parent = None
+        self.set_redblack(node.left, "right", node)
+        self.set_redblack(node, "left", left_right_child)
+
+    def replace_redblack(self, parent, curr_child, new_child):
+        if parent.left is curr_child:
+            return self.set_redblack(parent, "left", new_child)
+        elif parent.right is curr_child:
+            return self.set_redblack(parent, "right", new_child)
+        return False
+
+    def set_redblack(self, parent, which_child, child):
+        if which_child is not "left" and which_child is not "right":
+            return False
+        if which_child is "left":
+            parent.left = child
+        else:
+            parent.right = child
+        if child is not None:
+            child.parent = parent
+        return True
+
+    #search redblack tree for specific data
+    def search_redblack(self, data):
+        curr = self.root
+        while curr is not None:
+            if data > curr.key:
+                curr = curr.right
+            elif data < curr.key:
+                curr = curr.left
+            else:
+                return True
+        return False
+
+    def print_redblack(self, node):
+        if node is None:#is list is empty return
+            return
+        print(node.key, node.color)
+        self.print_redblack(node.left)#print left node
+        self.print_redblack(node.right)#print right node
+        return
+
+
+def print_anagrams_avl(word, english_words, prefix=""):
+    if len(word) <= 1:
+        s = prefix + word
+
+        if english_words.search_avl(s):
+            print(prefix + word)
+    else:
+       for i in range(len(word)):
+           cur = word[i: i + 1]
+           before = word[0: i] # letters before cur
+           after = word[i + 1:] # letters after cur
+
+           if cur not in before: # Check if permutations of cur have not been generated.
+               print_anagrams_avl(before + after, english_words, prefix + cur)
+               
+
+def print_anagrams_redblack(word,english_words, prefix=""):
+    if len(word) <= 1:
+        s = prefix + word
+
+        if english_words.search_redblack(s):
+            print(s)
+    else:
+       for i in range(len(word)):
+           cur = word[i: i + 1]
+           before = word[0: i] # letters before cur
+           after = word[i + 1:] # letters after cur
+
+           if cur not in before: # Check if permutations of cur have not been generated.
+               print_anagrams_redblack(before + after, english_words, prefix + cur)
+
+
+def count_anagrams_avl(word,english_words, prefix=""):
+    global count
+    if len(word) <= 1:
+        s = prefix + word
+
+        if english_words.search_avl(s):
+            count = count + 1
+
+    else:
+        for i in range(len(word)):
+            cur = word[i: i + 1]
+            before = word[0: i]  # letters before cur
+            after = word[i + 1:]  # letters after cur
+
+            if cur not in before:  # Check if permutations of cur have not been generated.
+                count_anagrams_avl(before + after, english_words, prefix + cur)
+    return count
+
+def count_anagrams_redblack(word,english_words, prefix=""):
+    global count
+    if len(word) <= 1:
+        s = prefix + word
+
+        if english_words.search_avl(s):
+            count = count + 1
+
+    else:
+        for i in range(len(word)):
+            cur = word[i: i + 1]
+            before = word[0: i]  # letters before cur
+            after = word[i + 1:]  # letters after cur
+
+            if cur not in before:  # Check if permutations of cur have not been generated.
+                count_anagrams_redblack(before + after, english_words, prefix + cur)
+    return count
+
+#greatest anagram method that goes through each word and gets the largest num of ana for a word
+def greatest_an(english_words):
+    f = open("t.txt", "r")
+    largest = 0
+    word = ""
+    count = 0
+    for line in f:
+        x=str(line.replace("\n","")) #go through every line
+        y = count_anagrams_avl(x,english_words)
+        if y >= largest:
+            word = x
+            largest = y
+            count = 0
+            print(word)
+        return largest
+
+
+
+
+#------------read file methods-----------------------
+def read_file_avl():
+    file = open("t.txt", "r")
+    avl = AVL_Tree()
+    #line = file.readline()
+    for line in file:
+       avl.insert_avl(line.replace("\n",""))
+    return avl
+
+
+def read_file_redblack():
+    file = open("t.txt", "r")
+    redblack = RedBlackTree()
+    #line = file.readline()
+    for line in file.readlines():
+       redblack.insert_redblack(line.replace("\n", ""))
+    # redblack.print_redblack()
+    return redblack
+
+
+
+
+def main():
+    option = int(input("Please select which tree\nAVL Tree: Option 1\nRed and Black: Option 2\n"))
+
+    #if user decided avl tree
+    if option == 1:
+        word = input("what do you want\n")
+        avlt = read_file_avl()
+        avlt.print_avl(avlt.root)
+        print("anagrams:")
+        print_anagrams_avl(word, avlt)
+        print("number of anagrams:")
+        print(count_anagrams_avl(word, avlt))
+        print("word with most anagrams")
+        print(greatest_an(avlt))
+
+    #if user decided redblack tree
+    elif option == 2:
+        word = input("what do you want\n")
+        rbt = read_file_redblack()
+        rbt.print_redblack(rbt.root)
+        print("anagrams:")
+        print_anagrams_redblack(word, rbt)
+        print("number of anagrams:")
+        print(count_anagrams_redblack(word,rbt))
+        print("word with most anagrams:")
+        print(greatest_an(rbt))
+    else:
+        print("this sucks, this input is invalid")
+
+main()
